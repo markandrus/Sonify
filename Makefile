@@ -6,7 +6,7 @@ SOURCES=main.c
 OBJECTS=$(SOURCES:.c=.o)
 
 all: 
-	$(CC) $(CFLAGS) $(LDFLAGS) main.c -o sonify 
+	$(CC) $(CFLAGS) $(LDFLAGS) main.c resize.c -o sonify 
 
 clean:
 	rm -rf *o main
