@@ -1,14 +1,11 @@
-// sonify_cleanup.c
 #include <math.h>
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <pthread.h>
 
 #include <jack/jack.h>
-#include <gd.h>
 #include <aubio/aubio.h>
 
 #include "math_util.h"
@@ -18,32 +15,6 @@
 #include <SDL.h>
 #include "resize.h"
 
-//#include <gnome.h>
-
-//#include "interface.h"
-//#include "support.h"
-typedef struct
-{
-	uint8_t r;
-	uint8_t g;
-	uint8_t b;
-} color;
-
-color get_Color(SDL_Surface *img, int x, int y)
-{
-	color rgb;
-	uint8_t r;
-	uint8_t g;
-	uint8_t b;
-	uint8_t *pixels = (uint8_t*) img->pixels;
-	uint8_t pixel = pixels[(y*img->w) + x];
-	SDL_GetRGB(pixel, img->format, &r, &g, &b);
-	rgb.r = r;
-	rgb.g = g;
-	rgb.b = b;
-	return rgb;
-}
-//pthread_t thread;
 const double PI = 3.14;
 
 // Jack
@@ -87,7 +58,6 @@ float max_amp = 0;
 int X = 0;
 int Y = 0;
 
-//gdImagePtr source_image, dest_image;
 SDL_Surface *source_image, *dest_image, *dub_image;
 
 // aubio pitch detection stuff
@@ -104,13 +74,10 @@ void init_aubio() {
 	aubio_fvec = new_fvec(hopsize, 1);
 }
 
-//void generate_tone_array(gdImagePtr image) {
 void generate_tone_array(SDL_Surface *image) {
 	int width, height, x, y, p, c = 0;
-	//width = gdImageSX(image);
-	//height = gdImageSY(image);
 	width = image->w;
-	height = image->h*4;
+	height = image->h * 4;
 	image_tones_size = width * height;
 	image_tones = (float *) malloc(width * height * sizeof(float));
 	image_tones_amp = (float *) malloc(width * height * sizeof(float));
@@ -120,7 +87,6 @@ void generate_tone_array(SDL_Surface *image) {
 	}
 	for (y = 0; y < height; y++) {
 		for (x = 0; x < width; x++) {
-			//p = gdImageGetPixel(image, x, y);
 			color rgb;
 			rgb = get_Color(image, x, y);
 			float H, S, L;
@@ -134,22 +100,18 @@ void generate_tone_array(SDL_Surface *image) {
 
 void write_to_image(SDL_Surface *image, float R, float G, float B) {
 	int width, height;
-	//width = gdImageSX(image);
-	//height = gdImageSY(image);
 	width = image->w;
 	height = image->h;
 	if (X == width) {
 		X = 0;
 		Y++;
 	}
-	if (Y == height*4) {
+	if (Y == height * 4) {
 		Y = 0;
 	}
-	//int color = gdImageColorAllocate(image, R, G, B);
 	uint8_t color = SDL_MapRGB(image->format, (uint8_t) (R * 255.0), (uint8_t) (G * 255.0), (uint8_t) (B * 255.0));
-	//gdImageSetPixel(image, X, Y, color);
-	uint8_t *pixels = (uint8_t*)image->pixels;
-	pixels[(Y*image->w) + X] = color;
+	uint8_t * pixels = (uint8_t *) image->pixels;
+	pixels[(Y * image->w) + X] = color;
 	X++;
 }
 
@@ -163,7 +125,7 @@ void build_tone(float t, float a, enum TYPE type) {
 		exit(3);
 	}
 	
-	int i = 0;
+	int i;
 	for (i = 0; i < temp_samples_per_cycle; i++) {
 		switch(type) {
 			case Sine:
@@ -185,7 +147,7 @@ void build_tone(float t, float a, enum TYPE type) {
 
 void swap_cycle() {
 	if (cycle != NULL) {
-		sample_t *trash = cycle;
+		sample_t * trash = cycle;
 		cycle = temp_cycle;
 		free(trash);
 	} else {
@@ -197,8 +159,8 @@ void swap_cycle() {
 }
 
 int process(jack_nframes_t nframes, void *arg) {
-	sample_t *in = (sample_t *) jack_port_get_buffer(input_port, nframes);
-	sample_t *out = (sample_t *) jack_port_get_buffer(output_port, nframes);
+	sample_t * in = (sample_t *) jack_port_get_buffer(input_port, nframes);
+	sample_t * out = (sample_t *) jack_port_get_buffer(output_port, nframes);
 	if (aubio_fvec == NULL || aubio_fvec->data == NULL) {
 		init_aubio();
 	}
@@ -209,10 +171,10 @@ int process(jack_nframes_t nframes, void *arg) {
 			if (image_tones_index >= image_tones_size) {
 				image_tones_index = 0;
 			}
-			build_tone(image_tones[image_tones_index], 1-image_tones_amp[image_tones_index], waveform_type);
+			build_tone(image_tones[image_tones_index], 1 - image_tones_amp[image_tones_index], waveform_type);
 			float H, S, L, R, G, B;
 			Sound_to_HSL(aubio_pitchdetection(aubio, aubio_fvec), max_amp, pitch_scale, lower_bounds, &H, &S, &L);
-			Hsl2Rgb(&R, &G, &B, H, S, 1-L);
+			Hsl2Rgb(&R, &G, &B, H, S, 1 - L);
 			write_to_image(dest_image, R, G, B);
 			framecount = 0;
 			max_amp = 0;
@@ -231,21 +193,21 @@ int process(jack_nframes_t nframes, void *arg) {
 	return 0;      
 }
 
-int srate(jack_nframes_t nframes, void *arg) {
+int srate(jack_nframes_t nframes, void * arg) {
 	printf("the sample rate is now %lu/sec\n", nframes);
 	sample_rate = nframes;
 	return 0;
 }
 
-void error(const char *desc) {
+void error(const char * desc) {
 	fprintf(stderr, "JACK error: %s\n", desc);
 }
 
-void jack_shutdown(void *arg) {
+void jack_shutdown(void * arg) {
 	exit(1);
 }
 
-void save_image_file(FILE *image_file, char *file_name, int image_format) {
+void save_image_file(FILE * image_file, char * file_name, int image_format) {
 	//image_file = fopen(file_name, "wb");
 	//if (image_format == 1) {
 		//gdImageJpeg(dest_image, image_file, -1);
@@ -255,57 +217,14 @@ void save_image_file(FILE *image_file, char *file_name, int image_format) {
 	//fclose(image_file);
 }
 
-void *thread_interface() {
-	while(1) {
-		int choice = 0;
-		printf("0-Quit, 1-Save, 2-Edit, 3-Position\n");
-		printf(" > ");
-		scanf("%i", &choice);
-		if (choice == 0) {
-			break;
-		} else if (choice == 1) {
-			//save_image_file(global_image_file, global_file_name, global_image_format);
-		} else if (choice == 2) {
-			printf("0-Return, 1-Pitch Scale, 2-Lower Bounds, 3-Time-per-pixel (ms), 4-Waveform Type\n");
-			printf(" > ");
-			scanf("%i", &choice);
-			if (choice == 1) {
-				printf("Pitch Scale: ");
-				scanf("%d", &pitch_scale);
-			} else if (choice == 2) {
-				printf("Lower Bounds: ");
-				scanf("%d", &lower_bounds);
-			} else if (choice == 3) {
-				printf("Time-per-pixel (ms): ");
-				scanf("%f", &ms_time);
-				init_aubio();
-			} else if (choice == 4) {
-				printf("Waveform Type: ");
-				scanf("%d", &waveform_type);
-			}
-		} else {
-			printf("Currently at (%i, %i)...\n", X, Y);
-		}
-	}
-}
-
-int main(int argc, char *argv[]) {
-	pthread_t thread_interface;//, thread_gtk;
-
-	//GtkWidget *sonify_app;
-	//gnome_program_init(PACKAGE, VERSION, LIBGNOMEUI_MODULE, argc, argv, GNOME_PARAM_APP_DATADIR, PACKAGE_DATA_DIR, NULL);
-	//sonify_app = create_sonify_app();
-	//gtk_widget_show(sonify_app);
-	//pthread_create(&thread_gtk, NULL, gtk_main, NULL);
-	//gtk_main();
+int main(int argc, char * argv[]) {
+	//pthread_t thread_interface;
 
 	int image_format;
 	int image_format2;
 	jack_client_t *client;
-	const char **ports;
+	const char ** ports;
 	char file_name[100], file_name2[100];
-	//char * file_name = "un.png";
-	//char * file_name2 = "nu.png";
   
 	if (argc < 8) {
 		fprintf(stderr, "usage: sonify <client name> <image path> <freq scale> <lowest freq> <sine | square | saw | tri> <window scale>\n");
@@ -337,40 +256,14 @@ int main(int argc, char *argv[]) {
 	
 	input_port = jack_port_register(client, "input", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
 	output_port = jack_port_register(client, "output", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-/*
-	printf("Source Image: ");
-	scanf("%s", &file_name);
-	printf("0-Png, 1-Jpg: ");
-	scanf("%d", &image_format);
-	printf("Destination Image: ");
-	scanf("%s", &file_name2);	
-	printf("0-Png, 1-Jpg: ");
-	scanf("%d", &image_format2);	
-	printf("Pitch Scale: ");
-	scanf("%d", &pitch_scale);
-	printf("Lower Bounds: ");
-	scanf("%d", &lower_bounds);
-	printf("Time-per-pixel (ms): ");
-	scanf("%f", &ms_time);
-	init_aubio();
-	printf("Waveform Type: ");
-	scanf("%d", &waveform_type);
-*/
-	/*FILE *image_file;
-	image_file = fopen(file_name, "rb");
 
-	if (image_format == 1) {
-		source_image = gdImageCreateFromJpeg(image_file);
-	} else {
-		source_image = gdImageCreateFromPng(image_file);
-	}*/
+	//init_aubio(); ?
+	
 	source_image = IMG_Load(file_name);
 
 	generate_tone_array(source_image);
-	//gdImageDestroy(source_image);
 	SDL_FreeSurface(source_image);
 
-	//dest_image = gdImageCreateTrueColor(gdImageSX(source_image), gdImageSY(source_image));
 	dest_image = SDL_CreateRGBSurface (SDL_SWSURFACE, source_image->w, source_image->h, 32, 0, 0, 0, 0);
 
 	if(dest_image == NULL) {
@@ -383,11 +276,6 @@ int main(int argc, char *argv[]) {
 	if (jack_activate(client)) {
 		fprintf(stderr, "cannot activate client\n");
 		return 1;
-	}
-
-	/*if ((ports = jack_get_ports(client, NULL, NULL, JackPortIsOutput)) == NULL) {
-		fprintf(stderr, "no physical capture ports\n");
-		exit(1);
 	}
 
 	int i = 0;
@@ -410,10 +298,7 @@ int main(int argc, char *argv[]) {
 		}
 		i++;
 	}
-  
-	free(ports);*/
 
-	//pthread_create(&thread_interface, NULL, thread_interface, NULL);
 	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
 		fprintf(stderr, "SDL_Init() Failed.");
 		exit(1);
@@ -425,15 +310,11 @@ int main(int argc, char *argv[]) {
 	SDL_WM_SetCaption("Sonify", "Sonify");
 	SDL_Event event;
 	while(1) {
-		//save_image_file(global_image_file, global_file_name, global_image_format);
 		if (SDL_PollEvent(&event)) {
 			if (event.type == SDL_QUIT) {
 				break;
 			}
 		}
-		/*dub_image = SDL_CreateRGBSurfaceFrom(dest_image->pixels, dest_image->w, dest_image->h,
-				dest_image->BitsPerPixel, dest_image->pitch, dest_image->Rmask,
-				dest_image->Gmask, dest_image->BMask, dest_image->Amask);*/
 		dub_image = SDL_DisplayFormat(dest_image);
 		if (SDL_BlitSurface(SDL_ResizeFactor(dub_image, window_scale, 1), NULL, display, NULL) != 0) {
 			fprintf(stderr, "SDL_BlitSurface() Failed.");
@@ -444,7 +325,6 @@ int main(int argc, char *argv[]) {
 
 	jack_client_close(client);
 	del_aubio_pitchdetection(aubio);
-	//gdImageDestroy(dest_image);
 	SDL_Quit();
 	SDL_FreeSurface(dest_image);
 	SDL_FreeSurface(dub_image);

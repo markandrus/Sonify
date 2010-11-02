@@ -24,11 +24,28 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 // Thank you Pascal Getreuer!
-
-
 #include <stdint.h>
-void Rgb2Hsl(float *H, float *S, float *L, float R, float G, float B)
-{
+#include <SDL.h>
+
+typedef struct {
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+} color;
+
+color get_Color(SDL_Surface * img, int x, int y) {
+	color rgb;
+	uint8_t r, g, b, pixel;
+	uint8_t * pixels = (uint8_t *) img->pixels;
+	pixel = pixels[(y * img->w) + x];
+	SDL_GetRGB(pixel, img->format, &r, &g, &b);
+	rgb.r = r;
+	rgb.g = g;
+	rgb.b = b;
+	return rgb;
+}
+
+void Rgb2Hsl(float *H, float *S, float *L, float R, float G, float B) {
 	float Max = max(R, G, B);
 	float Min = min(R, G, B);
 	float C = Max - Min;
@@ -41,7 +58,7 @@ void Rgb2Hsl(float *H, float *S, float *L, float R, float G, float B)
 		if(Max == R)
 		{
 			*H = (G - B) / (float) C;
-			
+
 			if(G < B)
 				*H += 6;
 		}
@@ -59,8 +76,7 @@ void Rgb2Hsl(float *H, float *S, float *L, float R, float G, float B)
 	*H /= 360.0;
 }
 
-void Hsl2Rgb(float *R, float *G, float *B, float H, float S, float L)
-{
+void Hsl2Rgb(float *R, float *G, float *B, float H, float S, float L) {
 	float C = (L <= 0.5) ? (2*L*S) : ((2 - 2*L)*S);
 	float Min = L - 0.5*C;
 	float X;
@@ -108,9 +124,9 @@ void Hsl2Rgb(float *R, float *G, float *B, float H, float S, float L)
 	}
 }
 
-
 void Sound_to_HSL(float frequency, float amplitude, long scale, int low, float *H, float *S, float *L) {
 	*H = (frequency - low) / scale;
 	*S = 1;
 	*L = amplitude;
 }
+
