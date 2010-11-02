@@ -16,6 +16,7 @@
 
 #include <SDL_image.h>
 #include <SDL.h>
+#include "resize.h"
 
 //#include <gnome.h>
 
@@ -72,6 +73,7 @@ double amplitude = 1;
 float *image_tones;
 float *image_tones_amp;
 
+int window_scale = 1;
 int image_tones_size;
 int image_tones_index = 0;
 long offset = 0;
@@ -86,7 +88,7 @@ int X = 0;
 int Y = 0;
 
 //gdImagePtr source_image, dest_image;
-SDL_Surface *source_image, *dest_image;
+SDL_Surface *source_image, *dest_image, *dub_image;
 
 // aubio pitch detection stuff
 aubio_pitchdetection_t *aubio = NULL;
@@ -305,8 +307,8 @@ int main(int argc, char *argv[]) {
 	//char * file_name = "un.png";
 	//char * file_name2 = "nu.png";
   
-	if (argc < 5) {
-		fprintf(stderr, "usage: sonify <client name> <image path> <freq scale> <lowest freq> <sine | square | saw | tri>\n");
+	if (argc < 8) {
+		fprintf(stderr, "usage: sonify <client name> <image path> <freq scale> <lowest freq> <sine | square | saw | tri> <window scale>\n");
 		fprintf(stderr, "i.e. sonify sfy img_in.png 10000 1000 1 sine\n");
 		return 1;
 	}
@@ -325,6 +327,7 @@ int main(int argc, char *argv[]) {
 	if (strcmp(argv[6], "tri")==0) { waveform_type = 2; }
 	else if (strcmp(argv[6], "square")==0) { waveform_type = 1; }
 	else if (strcmp(argv[6], "saw")==0) { waveform_type = 3; } else { waveform_type = 0; }
+	window_scale = atoi(argv[7]);
   
 	jack_set_process_callback(client, process, 0);
 	jack_set_sample_rate_callback(client, srate, 0);
@@ -416,7 +419,7 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	SDL_Surface * display;
-	display = SDL_SetVideoMode((*source_image).w, (*source_image).h, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
+	display = SDL_SetVideoMode((*source_image).w*window_scale, (*source_image).h*window_scale, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
 	if (display == NULL) { fprintf(stderr, "SDL_SetVideoMode() Failed."); exit(1); }
 
 	SDL_WM_SetCaption("Sonify", "Sonify");
@@ -428,7 +431,11 @@ int main(int argc, char *argv[]) {
 				break;
 			}
 		}
-		if (SDL_BlitSurface(dest_image, NULL, display, NULL) != 0) {
+		/*dub_image = SDL_CreateRGBSurfaceFrom(dest_image->pixels, dest_image->w, dest_image->h,
+				dest_image->BitsPerPixel, dest_image->pitch, dest_image->Rmask,
+				dest_image->Gmask, dest_image->BMask, dest_image->Amask);*/
+		dub_image = SDL_DisplayFormat(dest_image);
+		if (SDL_BlitSurface(SDL_ResizeFactor(dub_image, window_scale, 1), NULL, display, NULL) != 0) {
 			fprintf(stderr, "SDL_BlitSurface() Failed.");
 			exit(1);
 		}
@@ -440,6 +447,7 @@ int main(int argc, char *argv[]) {
 	//gdImageDestroy(dest_image);
 	SDL_Quit();
 	SDL_FreeSurface(dest_image);
+	SDL_FreeSurface(dub_image);
 	free(cycle);
 	free(image_tones);
 	free(image_tones_amp);
