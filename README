@@ -10,6 +10,10 @@ For more info and screenshots, visit: http://mrkrbrts.com/blog/
 
 >> Building <<
 
+Just `make` in the source folder.
+
+TODO: Rewrite Makefile so that it is not OS X-specific.
+
 Sonify requires:
  + JACK: http://jackaudio.org/
  + Aubio: http://aubio.org/ 
