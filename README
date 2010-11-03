@@ -6,6 +6,8 @@ That is, given an image, Sonify generates a matrix of waveforms with frequencies
 
 I hope I described that well enough. Effectively Sonify allows you to manipulate images by way of sound, and vice versa. Fun experiments include passing an image through a delay effect, flanger, filter, or even Auto-Tune. You may also generate visual patterns by passing a drum loop or synth pattern into Sonify. 
 
+For more info and screenshots, visit: http://mrkrbrts.com/blog/
+
 >> Building <<
 
 Sonify requires:
@@ -17,11 +19,15 @@ Sonify requires:
 >> Usage <<
 
 At the terminal, type something like:
+
 	./sonify foo image.png 1000 100 10 sin 2
+
 to launch an instance of Sonify named "foo" that displays its resulting image scaled by 2. This command also maps the pixels of "image.png" to sine waves in the frequency range [100 hz, 1100 hz]. Each waveform will be played back for 10 ms, and each 10 ms segment of incoming audio will be transcoded into pixel data. Note that the duration 10 ms is significant: since the lower bounds of our frequency range is 100 hz, it takes 10 ms to produce a single 100 hz cycle. I assume if we provide Aubio's pitch detection algorithm with at least one full cycle we will get more accurate results.
 
 We could also launch an instance of Sonify as follows:
+
 	./sonify bar image.png 10000 1000 1 sq 1
+
 In this case "bar" displays its resulting image at the same size as the given image (scale factor of 1). Pixels of "image.png" will be mapped to square waves in the frequency range [1000 hz, 11000 hz], and "bar" will spend 1 ms per pixel. 1 ms is significant because it takes 1 ms to complete a 1000 hz cycle (see above). The speed at which "bar" updates makes it more pleasant to watch than "foo", but I need to work on the code to make "bar" transcode as accurately as "foo".
 
 >> TODO <<
