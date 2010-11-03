@@ -1,0 +1,48 @@
+>> About <<
+
+Sonify is a JACK plugin I hacked together that encodes images into audio and vice-versa, in realtime.
+
+That is, given an image, Sonify generates a matrix of waveforms with frequencies and amplitudes corresponding to the hue and luminance components of each pixel (HSL color model) mapped over a given frequency range. Sonify iterates through this image row-by-row, pixel-by-pixel, and plays back the corresponding waveform for a specified amount of time. Simultaneously, Sonify calculates the frequency and amplitude of incoming audio during this time, generates a corresponding HSL pixel (given S = 1), and draws this pixel to a new image. 
+
+I hope I described that well enough. Effectively Sonify allows you to manipulate images by way of sound, and vice versa. Fun experiments include passing an image through a delay effect, flanger, filter, or even Auto-Tune. You may also generate visual patterns by passing a drum loop or synth pattern into Sonify. 
+
+>> Building <<
+
+Sonify requires:
+ + JACK: http://jackaudio.org/
+ + Aubio: http://aubio.org/ 
+ + SDL, SDL_Image: http://www.libsdl.org/
+ + FFTW3: http://www.fftw.org/ (configure with `--enable-float`)
+
+>> Usage <<
+
+At the terminal, type something like:
+	./sonify foo image.png 1000 100 10 sin 2
+to launch an instance of Sonify named "foo" that displays its resulting image scaled by 2. This command also maps the pixels of "image.png" to sine waves in the frequency range [100 hz, 1100 hz]. Each waveform will be played back for 10 ms, and each 10 ms segment of incoming audio will be transcoded into pixel data. Note that the duration 10 ms is significant: since the lower bounds of our frequency range is 100 hz, it takes 10 ms to produce a single 100 hz cycle. I assume if we provide Aubio's pitch detection algorithm with at least one full cycle we will get more accurate results.
+
+We could also launch an instance of Sonify as follows:
+	./sonify bar image.png 10000 1000 1 sq 1
+In this case "bar" displays its resulting image at the same size as the given image (scale factor of 1). Pixels of "image.png" will be mapped to square waves in the frequency range [1000 hz, 11000 hz], and "bar" will spend 1 ms per pixel. 1 ms is significant because it takes 1 ms to complete a 1000 hz cycle (see above). The speed at which "bar" updates makes it more pleasant to watch than "foo", but I need to work on the code to make "bar" transcode as accurately as "foo".
+
+>> TODO <<
+
+Write non-realtime/non-JACK programs for converting an audio file into an image based on the algorithm detailed above, and vice-versa. That way, you could dub an image to cassette tape, mail it to your friend, have them digitize the audio, and then see how the image changed. Or you could just email the audio file. Whatever floats yer boat.
+
+>> License <<
+
+Sonify 
+Copyright (C) 2010 Mark Roberts
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
