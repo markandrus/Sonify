@@ -2,7 +2,7 @@
 
 Sonify is a JACK plugin I hacked together that encodes images into audio and vice-versa, in realtime.
 
-That is, given an image, Sonify generates a matrix of waveforms with frequencies and amplitudes corresponding to the hue and luminance components of each pixel (HSL color model) mapped over a given frequency range. Sonify iterates through this image row-by-row, pixel-by-pixel, and plays back the corresponding waveform for a specified amount of time. Simultaneously, Sonify calculates the frequency and amplitude of incoming audio during this time, generates a corresponding HSL pixel (given S = 1), and draws this pixel to a new image. 
+That is, given an image, Sonify generates a matrix of waveforms with frequencies and amplitudes corresponding to the hue and luminance components of each pixel (HSL color model) mapped over a given frequency range. Sonify iterates through the given image row-by-row, pixel-by-pixel, and plays back the corresponding waveform for a specified amount of time. Simultaneously, Sonify calculates the frequency and amplitude of incoming audio during this time, generates a corresponding HSL pixel (given S = 1), and draws this pixel to a new image. 
 
 I hope I described that well enough. Effectively Sonify allows you to manipulate images by way of sound, and vice versa. Fun experiments include passing an image through a delay effect, flanger, filter, or even Auto-Tune. You may also generate visual patterns by passing a drum loop or synth pattern into Sonify. 
 
