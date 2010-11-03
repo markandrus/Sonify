@@ -32,9 +32,9 @@ float max(float a, float b, float c) {
 }
 
 double sgn(double a) {
-	if (a>0)
+	if (a > 0)
         	return 1;
-	else if (a<0)
+	else if (a < 0)
         	return -1;
 	else
 	        return 0;
